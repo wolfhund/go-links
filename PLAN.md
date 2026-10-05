@@ -58,7 +58,8 @@ Every response carries `X-Request-ID` (propagated if the client sent one); each 
 6. Tests: pytest, >80% coverage.
 7. Frontend: API client, list, create form (labels, aria-live errors, prefill from `?slug=`), Vite proxy.
 8. README (run, assumptions, tradeoffs, next day) + finalize DECISIONS.md.
-9. Create public GitHub repo `wolfhund/go-links` and push (only after explicit OK).
+9. Root Makefile: `make install`, `make dev`, `make test` (added after review, see D17).
+10. Create public GitHub repo `wolfhund/go-links` and push (only after explicit OK).
 
 ## Out of scope (documented in README "next day")
 

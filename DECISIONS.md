@@ -85,6 +85,12 @@ Built with an AI assistant (Claude Code) acting as the implementer; every archit
 - **Chosen:** One commit per plan step, no strict timebox. AI assistance is disclosed in the README.
 - **Why:** The git history shows how the work progressed and makes the decisions easy to review.
 
+## D17 — Single command to run the monorepo
+- **Context:** D11 meant starting two processes in two terminals, which is awkward for reviewers.
+- **Options:** root Makefile (`make dev` runs both in parallel) · root `package.json` + `concurrently` · FastAPI serves the built UI (one process) · `dev.sh` script.
+- **Chosen:** Root Makefile with `install`, `dev` and `test` targets.
+- **Why:** Zero extra dependencies (make ships with macOS and Linux), a conventional entry point for a mixed Python/JS repo, and it keeps Vite hot-reload. Serving the build from FastAPI would cost the dev loop.
+
 ---
 
 ## Notes found during implementation

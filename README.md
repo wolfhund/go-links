@@ -10,18 +10,12 @@ Users can **create** a shortcut, **view** existing shortcuts, and **visit** one 
 
 ## How to run
 
-Requirements: [uv](https://docs.astral.sh/uv/) and Node 20+.
+Requirements: [uv](https://docs.astral.sh/uv/), Node 20+ and `make`.
 
 ```bash
-# Terminal 1 — API on http://localhost:8000
-cd backend
-uv sync
-uv run fastapi dev app/main.py
-
-# Terminal 2 — UI on http://localhost:5173
-cd frontend
-npm install
-npm run dev
+make install   # backend (uv sync) + frontend (npm install), first time only
+make dev       # API on http://localhost:8000 + UI on http://localhost:5173 (Ctrl+C stops both)
+make test      # backend tests + coverage
 ```
 
 Open http://localhost:5173, create a link (e.g. `oncall`), then visit `http://localhost:8000/oncall`.
@@ -29,10 +23,15 @@ To try the "missing link" flow, visit `http://localhost:8000/anything-new`.
 
 API docs (OpenAPI/Swagger): http://localhost:8000/docs
 
+<details>
+<summary>Without make</summary>
+
 ```bash
-# Tests + coverage (backend)
-cd backend && uv run pytest
+cd backend && uv sync && uv run fastapi dev app/main.py   # terminal 1
+cd frontend && npm install && npm run dev                 # terminal 2
+cd backend && uv run pytest                               # tests
 ```
+</details>
 
 ### Configuration (env vars, all optional)
 
@@ -96,7 +95,7 @@ frontend/src/
 - **302 instead of 301.** 301s are cached by browsers forever, so a target could never be changed and visits would be invisible to the server. 302 costs one round-trip per visit, which is negligible for an internal tool.
 - **SQLite over Postgres.** Zero setup for reviewers. SQLModel/SQLAlchemy keeps the swap to Postgres to a connection-string change. Uniqueness is enforced by a DB constraint rather than check-then-insert, so concurrent creates can't race.
 - **Repository layer, even for 3 queries.** It keeps routes thin and gives teammates one obvious place to add queries, at the cost of a little indirection.
-- **Two dev processes (Vite proxy) instead of FastAPI serving the build.** This is the normal React + API workflow and avoids CORS. Shipping as a single process would be a small change (`StaticFiles` mount).
+- **Two dev processes (Vite proxy), started together by `make dev`, instead of FastAPI serving the build.** This keeps frontend hot-reload and avoids CORS. Shipping as a single process would be a small change (`StaticFiles` mount).
 - **No frontend state library or UI kit.** Two components don't justify one. Accessibility comes from semantic HTML: labels, `aria-invalid`/`aria-describedby`, `role="alert"` for errors, a polite live region for success, and visible focus.
 - **Backend tests only (100% coverage, 29 tests).** The business rules (validation, conflicts, redirects) live in the backend. The UI was checked manually in the browser.
 - **No Docker, CI, migrations or metrics.** The brief asks for a small, thoughtful first iteration.
