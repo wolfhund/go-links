@@ -7,7 +7,7 @@ from fastapi import FastAPI
 
 from app.config import Settings, load_settings
 from app.db import build_engine, create_tables
-from app.routes import links
+from app.routes import links, redirect
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -25,6 +25,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = resolved
     app.state.engine = engine
     app.include_router(links.router)
+    # Catch-all /{slug} must be registered last so it never shadows other routes.
+    app.include_router(redirect.router)
     return app
 
 
