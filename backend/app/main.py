@@ -7,12 +7,14 @@ from fastapi import FastAPI
 
 from app.config import Settings, load_settings
 from app.db import build_engine, create_tables
-from app.routes import links, redirect
+from app.observability import RequestIdMiddleware, configure_logging
+from app.routes import health, links, redirect
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Build a configured FastAPI app (tests pass their own settings)."""
     resolved = settings or load_settings()
+    configure_logging(resolved.log_level)
     engine = build_engine(resolved.database_url)
 
     @asynccontextmanager
@@ -24,6 +26,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="Go Links", version="0.1.0", lifespan=lifespan)
     app.state.settings = resolved
     app.state.engine = engine
+    app.add_middleware(RequestIdMiddleware)
+    app.include_router(health.router)
     app.include_router(links.router)
     # Catch-all /{slug} must be registered last so it never shadows other routes.
     app.include_router(redirect.router)
