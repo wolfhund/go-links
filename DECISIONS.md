@@ -91,6 +91,13 @@ Built with an AI assistant (Claude Code) acting as the implementer; every archit
 - **Chosen:** Root Makefile with `install`, `dev` and `test` targets.
 - **Why:** Zero extra dependencies (make ships with macOS and Linux), a conventional entry point for a mixed Python/JS repo, and it keeps Vite hot-reload. Serving the build from FastAPI would cost the dev loop.
 
+## D18 — User-chosen slugs vs generated hash
+- **Context:** URL shorteners like bit.ly generate an opaque ID (`bit.ly/kfes3`). The brief asks for *go links* (`go/design-system`, `go/oncall`, `go/payroll`), which are a different product.
+- **Options:** user-chosen readable slug · system-generated hash/base62 ID · both (generate one only when the slug is left empty).
+- **Chosen:** User-chosen readable slug.
+- **Why:** The value of a go link is that it is **memorable**: people type `go/payroll` from memory instead of searching for a URL. Nobody remembers `go/kfes3`. A shortener optimizes for shortness when sharing; go links optimize for recall inside a company. That shifts the hard problems from ID generation to naming: validation, normalization and collisions (409).
+- **Next step:** if needed, auto-generate a slug when the field is left empty, as a fallback for one-off links.
+
 ---
 
 ## Notes found during implementation
