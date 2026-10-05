@@ -84,3 +84,12 @@ Built with an AI assistant (Claude Code) acting as the implementer; every archit
 - **Options:** commit per step, no strict timebox · strict 60-min timebox · single final commit.
 - **Chosen:** One commit per plan step, no strict timebox. AI assistance is disclosed in the README.
 - **Why:** The git history shows how the work progressed and makes the decisions easy to review.
+
+---
+
+## Notes found during implementation
+
+- **API schemas are plain Pydantic models, not SQLModel.** SQLModel's `Field` doesn't support `pattern`. Splitting the table model (`Link`) from the request/response schemas (`LinkCreate`, `LinkRead`) also keeps the API contract separate from storage.
+- **Friendly validation messages in the UI.** Pydantic's default copy (`String should match pattern '^[a-z0-9]+…'`) is accurate but unfriendly, so the API client maps known error types to plain language and keeps the server messages for everything else.
+- **Bug caught in manual browser testing:** after creating a link from the "go/x doesn't exist yet" flow, the notice stayed on screen and success was only announced to screen readers. Fixed by making the notice state and showing a visible success message (still in a live region).
+- **Duplicate access logs:** uvicorn's own access log duplicates the app's request-ID access line. This is left as is in dev and noted for production (`--no-access-log`).
