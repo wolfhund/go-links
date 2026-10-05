@@ -2,7 +2,8 @@
 
 from datetime import UTC, datetime
 
-from pydantic import HttpUrl, field_validator
+from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import Field as SchemaField
 from sqlmodel import Field, SQLModel
 
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
@@ -24,10 +25,12 @@ class Link(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_utc_now)
 
 
-class LinkCreate(SQLModel):
+class LinkCreate(BaseModel):
     """Request body for creating a link."""
 
-    slug: str = Field(min_length=1, max_length=SLUG_MAX_LENGTH, pattern=SLUG_PATTERN)
+    slug: str = SchemaField(
+        min_length=1, max_length=SLUG_MAX_LENGTH, pattern=SLUG_PATTERN
+    )
     target_url: HttpUrl
 
     @field_validator("slug", mode="before")
@@ -45,8 +48,10 @@ class LinkCreate(SQLModel):
         return value
 
 
-class LinkRead(SQLModel):
+class LinkRead(BaseModel):
     """Public representation of a link."""
+
+    model_config = {"from_attributes": True}
 
     slug: str
     target_url: str
