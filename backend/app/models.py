@@ -1,5 +1,7 @@
 """Link persistence model and API schemas."""
 
+from socket import socket
+import ipaddress
 from datetime import UTC, datetime
 
 from pydantic import BaseModel, HttpUrl, field_validator
@@ -14,6 +16,44 @@ RESERVED_SLUGS = frozenset({"api", "health", "docs", "redoc"})
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
+
+def is_block_ip(ip_str: str) -> bool:
+    blocked = True
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    
+        if ip.version == 6 and ip.ipv4_mapped is not None:
+            ip = ip.ipv4_mapped
+    
+        blocked = (
+            ip.is_loopback,
+            ip.is_private,
+            ip.is_link_local,
+            ip.is_reserved,
+        )
+    except ValueError:
+        blocked = False
+    
+    return blocked
+
+def validate_safe_target_url(url: HttpUrl) -> HttpUrl:
+    hostname = url.host
+
+    if not hostname:
+        raise ValueError("URL must include a hostname")
+    
+    # ask DNS
+    try:
+        answers = socket.getaddrinfo(hostname.strip("[]"), None)
+    except socket.gaierror as e:
+        raise ValueError(f"DNS resolution failed: {hostname}")
+
+    # check all resolved IPs
+    for answer in answers:
+        if is_block_ip(answer[4][0]):
+            raise ValueError(f"URL is not safe: {hostname} resolves to blocked IP {answer[4][0]}")
+        
+    return url
 
 
 class Link(SQLModel, table=True):
@@ -46,7 +86,13 @@ class LinkCreate(BaseModel):
         if value in RESERVED_SLUGS:
             raise ValueError(f"'{value}' is reserved")
         return value
-
+    
+    @field_validator("target_url")
+    @classmethod
+    def reject_internal_target(cls, value: HttpUrl) -> HttpUrl:
+        result = validate_safe_target_url(value)
+        return result
+        
 
 class LinkRead(BaseModel):
     """Public representation of a link."""
